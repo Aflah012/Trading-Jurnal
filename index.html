@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jurnal Trading</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Jurnal Trading">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root { --bg-color: #f5f7fa; --card-bg: white; --text-color: #333; --border-color: #ddd; --shadow: 0 1px 3px rgba(0,0,0,0.1); --accent-color: #0d6efd; --success-color: #28a745; --danger-color: #dc3545; --menu-bg: #fff; --menu-text: #333; --search-bg: #f1f3f5; }
+    .dark-mode { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0; --border-color: #444; --shadow: 0 1px 3px rgba(255,255,255,0.1); --menu-bg: #2e2e2e; --menu-text: #e0e0e0; --search-bg: #2c2c2e; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding: 16px; padding-top: 0; line-height: 1.5; overscroll-behavior: none; }
+    body.no-scroll { overflow: hidden; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--menu-bg); padding: 12px 16px; border-radius: 8px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000; }
+    .menu-btn, #addBtn { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-color); }
+    #addBtn { background: var(--success-color); color: white; border: none; }
+    #searchContainer { display: none; background: var(--search-bg); padding: 8px; border-radius: 6px; align-items: center; flex: 1; margin: 0 10px; }
+    #searchInput { flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; background: var(--card-bg); color: var(--text-color); }
+    #closeSearch { background: none; border: none; font-size: 1.2rem; margin-left: 8px; cursor: pointer; color: var(--text-color); }
+    #stats { background: var(--card-bg); padding: 16px; margin-bottom: 16px; border-radius: 8px; box-shadow: var(--shadow); }
+    #stats h3 { margin-bottom: 12px; }
+    #stats p { margin: 4px 0; }
+    ul { list-style: none; }
+    li { background: var(--card-bg); padding: 14px; margin-bottom: 12px; border-radius: 8px; box-shadow: var(--shadow); position: relative; transition: transform 0.2s; cursor: grab; }
+    li:active { cursor: grabbing; }
+    .action-btns { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    li.long-pressed .action-btns { opacity: 1; pointer-events: auto; }
+    .empty-state { text-align: center; color: #888; padding: 40px 0; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1001; }
+    .modal-content { background: var(--card-bg); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .close { font-size: 1.5rem; cursor: pointer; color: #666; }
+    label { display: block; margin: 12px 0 6px; font-weight: 600; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; background: var(--card-bg); color: var(--text-color); }
+    textarea { min-height: 80px; }
+    .toggle-group { display: flex; gap: 10px; margin-bottom: 12px; }
+    .toggle-btn { flex: 1; padding: 10px; border: 1px solid var(--border-color); background: #f8f9fa; border-radius: 6px; cursor: pointer; text-align: center; }
+    .toggle-btn.active { background: #e7f3ff; border-color: var(--accent-color); font-weight: bold; }
+    .dark-mode .toggle-btn { background: #2c2c2e; color: var(--text-color); }
+    .dark-mode .toggle-btn.active { background: #2196f3; }
+    .tp-container { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; }
+    .tp-input { flex: 1; }
+    .remove-tp-btn { background: #dc3545; color: white; border: none; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .add-tp-btn { background: #4caf50; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.9rem; cursor: pointer; margin-top: 8px; }
+    .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+    button { padding: 12px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+    #saveBtn { background: var(--accent-color); color: white; }
+    #cancelBtn { background: #6c757d; color: white; }
+    .status-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-top: 4px; }
+    .status-berhasil { background: #e8f5e9; color: #2e7d32; }
+    .status-gagal { background: #ffebee; color: #c62828; }
+    .status-dibatalkan { background: #fff3e0; color: #e65100; }
+    .status-berlangsung { background: #e3f2fd; color: #1565c0; }
+    .dark-mode .status-berhasil { background: #2e7d32; color: white; }
+    .dark-mode .status-gagal { background: #c62828; color: white; }
+    .dark-mode .status-dibatalkan { background: #e65100; color: white; }
+    .dark-mode .status-berlangsung { background: #1565c0; color: white; }
+    .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--success-color); color: white; border: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; }
+    .page { display: none; position: fixed; bottom: 0; left: 0; width: 100%; max-height: 50vh; background: var(--card-bg); border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 16px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); overflow-y: auto; z-index: 99; overscroll-behavior: contain; }
+    .page.active { display: block; }
+    .page-header { display: flex; align-items: center; margin-bottom: 20px; padding: 12px 0; }
+    .back-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; margin-right: 10px; }
+    /* Swipe actions */
+    .swipe-left { background-color: #f8d7da; }
+    .swipe-right { background-color: #d4edda; }
+    #closePriceContainer { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="mainPage">
+    <header>
+      <button class="menu-btn" id="searchBtn">🔍</button>
+      <div id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Cari pair...">
+        <button id="closeSearch">×</button>
+      </div>
+      <button class="menu-btn" id="filterBtn">📊</button>
+      <button class="menu-btn" id="settingsBtn">⚙️</button>
+      <button id="addBtn">+</button>
+    </header>
+
+    <section id="stats">
+      <h3>Ringkasan</h3>
+      <p>Total Jurnal: <span id="totalJournals">0</span></p>
+      <p>Win Rate: <span id="winRate">0%</span></p>
+      <p>Rata-rata Risk/Reward: <span id="avgRR">0.00</span></p>
+      <p>Total Profit/Loss: <span id="totalPL">0</span></p>
+    </section>
+
+    <main>
+      <ul id="journalList"></ul>
+    </main>
+  </div>
+
+  <div id="journalModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Tambah Jurnal</h2>
+        <span class="close">&times;</span>
+      </div>
+      <form id="journalForm">
+        <input type="hidden" id="editIndex" value="-1">
+        <label for="pair">Pair</label>
+        <input type="text" id="pair" placeholder="Contoh: BTC/USDT" inputmode="text" autocapitalize="characters" required>
+        <label for="entry">Harga Entry</label>
+        <input type="text" id="entry" inputmode="decimal" placeholder="60000.0" required>
+        <label for="rrDisplay">Risk/Reward Ratio (Otomatis)</label>
+        <input type="text" id="rrDisplay" readonly placeholder="RR akan dihitung otomatis">
+        <div id="tpInputs">
+          <label>Take Profit (TP)</label>
+          <div class="tp-container"><input type="text" class="tp-input" inputmode="decimal" placeholder="TP1: 61000.0" data-index="0"><button type="button" class="remove-tp-btn" style="display:none;">×</button></div>
+        </div>
+        <button type="button" class="add-tp-btn" id="addTpBtn">+ Tambah TP</button>
+        <label for="sl">Stop Loss (SL)</label>
+        <input type="text" id="sl" inputmode="decimal" placeholder="59000.0">
+        <label for="datetime">Tanggal & Waktu</label>
+        <input type="datetime-local" id="datetime" required>
+        <label>Status Pasar</label>
+        <div class="toggle-group">
+          <div class="toggle-btn active" data-value="bullish">Bullish</div>
+          <div class="toggle-btn" data-value="bearish">Bearish</div>
+        </div>
+        <input type="hidden" id="marketStatus" value="bullish">
+        <label for="tradeStatus">Status Trading</label>
+        <select id="tradeStatus" required>
+          <option value="berlangsung">Sedang Berlangsung</option>
+          <option value="berhasil-full">Berhasil (Full TP)</option>
+          <option value="gagal">Gagal</option>
+          <option value="dibatalkan">Dibatalkan</option>
+        </select>
+        <div id="closePriceContainer">
+          <label for="closePrice">Harga Penutupan</label>
+          <input type="text" id="closePrice" inputmode="decimal" placeholder="Misalnya: 61500.0">
+        </div>
+        <label for="notes">Catatan Tambahan</label>
+        <textarea id="notes" placeholder="Catatan strategi, pelajaran, dll."></textarea>
+        <div class="btn-group">
+          <button type="button" id="cancelBtn">Batal</button>
+          <button type="submit" id="saveBtn">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="filterPage" class="page">
+    <div class="page-header">
+      <button class="back-btn" id="backToMain1">&larr;</button>
+      <h2>Filter</h2>
+    </div>
+    <div class="controls">
+      <label for="statusFilter">Status Trading</label>
+      <select id="statusFilter">
+        <option value="">Semua Status</option>
+        <option value="berlangsung">Sedang Berlangsung</option>
+        <option value="berhasil">Berhasil</option>
+        <option value="gagal">Gagal</option>
+        <option value="dibatalkan">Dibatalkan</option>
+      </select>
+      <label for="minPL">Range Profit/Loss (Min)</label>
+      <input type="number" id="minPL" placeholder="Contoh: -100">
+      <label for="maxPL">Range Profit/Loss (Max)</label>
+      <input type="number" id="maxPL" placeholder="Contoh: 200">
+      <label for="minRR">Range Risk/Reward (Min)</label>
+      <input type="number" id="minRR" step="0.01" placeholder="Contoh: 1.0">
+      <label for="maxRR">Range Risk/Reward (Max)</label>
+      <input type="number" id="maxRR" step="0.01" placeholder="Contoh: 3.0">
+      <label for="pairFilter">Pair</label>
+      <select id="pairFilter">
+        <option value="">Semua Pair</option>
+      </select>
+      <label for="startDate">Tanggal Awal</label>
+      <input type="date" id="startDate">
+      <label for="endDate">Tanggal Akhir</label>
+      <input type="date" id="endDate">
+    </div>
+  </div>
+
+  <div id="settingsPage" class="page">
+    <div class="page-header">
+      <button class="back-btn" id="backToMain2">&larr;</button>
+      <h2>Pengaturan</h2>
+    </div>
+    <div class="controls">
+      <button id="exportBtn">Ekspor JSON</button>
+      <button id="importBtn">Impor JSON</button>
+      <input type="file" id="importInput" accept=".json" style="display:none;">
+      <button id="themeToggle">Mode Gelap</button>
+    </div>
+  </div>
+
+  <div id="suggestionsPortal"></div>
+  <button class="fab" id="fabAdd">+</button>
+
+  <script>
+    // Registrasi Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.error('SW registration failed:', err));
+      });
+    }
+
+    // Migrasi dari localStorage ke IndexedDB
+    const DB_NAME = 'TradingJournalsDB';
+    const STORE_NAME = 'journals';
+
+    const migrateFromLocalStorage = () => {
+      const stored = localStorage.getItem('tradingJournals');
+      if (stored) {
+        const journals = JSON.parse(stored);
+        localStorage.removeItem('tradingJournals');
+        return journals;
+      }
+      return [];
+    };
+
+    let journals = migrateFromLocalStorage();
+
+    journals = journals.map(j => {
+      if (j.tp !== undefined) {
+        j.tps = [j.tp];
+        delete j.tp;
+      }
+      if (!j.tps) j.tps = [];
+      if (!j.tradeStatus) j.tradeStatus = 'berlangsung';
+      if (!j.notes) j.notes = '';
+      return j;
+    });
+
+    // IndexedDB setup
+    let db;
+
+    const initDB = () => {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+
+        request.onupgradeneeded = event => {
+          db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            store.createIndex('datetime', 'datetime', { unique: false });
+            store.createIndex('pair', 'pair', { unique: false });
+            store.createIndex('tradeStatus', 'tradeStatus', { unique: false });
+          }
+        };
+
+        request.onsuccess = event => {
+          db = event.target.result;
+          resolve();
+        };
+
+        request.onerror = event => reject(event.target.error);
+      });
+    };
+
+    const saveToDB = (data) => {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.clear();
+        data.forEach(item => store.add(item));
+        tx.oncomplete = () => resolve();
+        tx.onerror = event => reject(event.target.error);
+      });
+    };
+
+    const loadFromDB = () => {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.getAll();
+        request.onsuccess = event => resolve(event.target.result);
+        request.onerror = event => reject(event.target.error);
+      });
+    };
+
+    // DOM Elements
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const els = {
+      mainPage: $('#mainPage'), filterPage: $('#filterPage'), settingsPage: $('#settingsPage'),
+      journalList: $('#journalList'), modal: $('#journalModal'), addBtn: $('#addBtn'), fabAdd: $('#fabAdd'),
+      closeBtn: $('.close'), cancelBtn: $('#cancelBtn'), form: $('#journalForm'),
+      pair: $('#pair'), suggestions: $('#suggestionsPortal'), entry: $('#entry'), sl: $('#sl'),
+      datetime: $('#datetime'), marketStatus: $('#marketStatus'), tpInputs: $('#tpInputs'),
+      addTpBtn: $('#addTpBtn'), modalTitle: $('#modalTitle'), editIndex: $('#editIndex'),
+      tradeStatus: $('#tradeStatus'), notes: $('#notes'), statusFilter: $('#statusFilter'),
+      startDate: $('#startDate'), endDate: $('#endDate'), exportBtn: $('#exportBtn'),
+      importBtn: $('#importBtn'), importInput: $('#importInput'), themeToggle: $('#themeToggle'),
+      backToMain1: $('#backToMain1'), backToMain2: $('#backToMain2'),
+      searchBtn: $('#searchBtn'), filterBtn: $('#filterBtn'), settingsBtn: $('#settingsBtn'),
+      searchContainer: $('#searchContainer'), searchInput: $('#searchInput'), closeSearch: $('#closeSearch'),
+      totalJournals: $('#totalJournals'), winRate: $('#winRate'), avgRR: $('#avgRR'), totalPL: $('#totalPL'),
+      rrDisplay: $('#rrDisplay'), minPL: $('#minPL'), maxPL: $('#maxPL'), minRR: $('#minRR'), maxRR: $('#maxRR'),
+      pairFilter: $('#pairFilter'), closePrice: $('#closePrice'), closePriceContainer: $('#closePriceContainer')
+    };
+
+    let filteredJournals = [];
+
+    // Initialize DB
+    initDB().then(async () => {
+      if (journals.length > 0) {
+        await saveToDB(journals);
+        journals = await loadFromDB();
+      } else {
+        journals = await loadFromDB();
+      }
+      applyFilters();
+      updateStats();
+      populatePairFilter();
+    }).catch(err => console.error('DB error:', err));
+
+    // Navigation
+    const showPage = page => {
+      $$('.page').forEach(p => p.classList.remove('active'));
+      page.classList.add('active');
+      document.body.classList.add('no-scroll');
+    };
+
+    const hidePage = page => {
+      page.classList.remove('active');
+      document.body.classList.remove('no-scroll');
+    };
+
+    // Helper functions
+    const getCurrentLocalISO = () => new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const getUniquePairs = () => [...new Set(journals.map(j => j.pair).filter(Boolean))];
+    const getStatusText = s => ({
+      'berlangsung': 'Sedang Berlangsung', 'berhasil-tp1': 'Berhasil (TP1)', 'berhasil-tp2': 'Berhasil (TP2)',
+      'berhasil-full': 'Berhasil (Full TP)', 'gagal': 'Gagal', 'dibatalkan': 'Dibatalkan'
+    })[s] || 'Sedang Berlangsung';
+    const getStatusClass = s => s.startsWith('berhasil') ? 'status-berhasil' : s === 'gagal' ? 'status-gagal' : s === 'dibatalkan' ? 'status-dibatalkan' : 'status-berlangsung';
+
+    // Populate pair filter
+    const populatePairFilter = () => {
+      const pairs = getUniquePairs();
+      els.pairFilter.innerHTML = '<option value="">Semua Pair</option>';
+      pairs.forEach(pair => {
+        const opt = document.createElement('option');
+        opt.value = pair;
+        opt.textContent = pair;
+        els.pairFilter.appendChild(opt);
+      });
+    };
+
+    // Generate dynamic status options based on TP count
+    const generateStatusOptions = (tpCount) => {
+      const options = ['berlangsung', 'gagal', 'dibatalkan'];
+      if (tpCount > 0) {
+        for (let i = 1; i <= tpCount; i++) {
+          options.splice(1, 0, `berhasil-tp${i}`);
+        }
+        options.splice(1, 0, 'berhasil-full');
+      } else {
+        options.splice(1, 0, 'berhasil-full');
+      }
+      return options;
+    };
+
+    // Update trade status options in modal
+    const updateTradeStatusOptions = (tpCount) => {
+      const select = els.tradeStatus;
+      select.innerHTML = '';
+      const options = generateStatusOptions(tpCount);
+      options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = getStatusText(opt);
+        select.appendChild(option);
+      });
+    };
+
+    // Update stats
+    const updateStats = () => {
+      const total = journals.length;
+      const success = journals.filter(j => j.tradeStatus.startsWith('berhasil')).length;
+      const winRate = total ? ((success / total) * 100).toFixed(1) + '%' : '0%';
+
+      let totalRR = 0, rrCount = 0, totalPL = 0;
+      journals.forEach(j => {
+        if (j.entry && j.sl) {
+          const risk = Math.abs(j.entry - j.sl);
+          if (j.tps[0]) {
+            const reward = Math.abs(j.tps[0] - j.entry);
+            if (risk > 0) totalRR += reward / risk, rrCount++;
+          }
+        }
+        let pl = 0;
+        if (j.tradeStatus.startsWith('berhasil') && j.tps[0]) {
+          pl = j.closePrice ? j.closePrice - j.entry : j.tps[0] - j.entry;
+        } else if (j.tradeStatus === 'gagal' && j.sl) {
+          pl = j.closePrice ? j.closePrice - j.entry : j.sl - j.entry;
+        }
+        totalPL += pl;
+      });
+
+      els.totalJournals.textContent = total;
+      els.winRate.textContent = winRate;
+      els.avgRR.textContent = rrCount ? (totalRR / rrCount).toFixed(2) : '0.00';
+      els.totalPL.textContent = totalPL.toFixed(2);
+    };
+
+    // Render journals
+    const renderJournals = () => {
+      if (filteredJournals.length === 0) {
+        els.journalList.innerHTML = '<li class="empty-state">Tidak ada jurnal yang cocok.</li>';
+        return;
+      }
+
+      els.journalList.innerHTML = filteredJournals.map((j, i) => {
+        const tps = j.tps && j.tps.length ? j.tps.filter(tp => tp !== null && tp !== undefined && tp !== 0).join(', ') : '–';
+        const statusText = getStatusText(j.tradeStatus);
+        const statusClass = getStatusClass(j.tradeStatus);
+        let rr = '–';
+        if (j.entry && j.sl) {
+          const risk = Math.abs(j.entry - j.sl);
+          if (j.tps[0]) {
+            const reward = Math.abs(j.tps[0] - j.entry);
+            if (risk > 0) rr = (reward / risk).toFixed(2);
+          }
+        }
+
+        const closeNote = j.closePrice ? ` | Closed on ${j.closePrice}` : '';
+
+        return `
+          <li data-id="${j.id}" draggable="true">
+            <strong>${j.pair}</strong> | ${j.marketStatus === 'bullish' ? '📈 Bullish' : '📉 Bearish'}<br>
+            Entry: ${j.entry} | TP: ${tps} | SL: ${j.sl || '–'} | RR: ${rr}${closeNote}<br>
+            <span class="status-badge ${statusClass}">${statusText}</span><br>
+            <small>${new Date(j.datetime).toLocaleString('id-ID')}</small>
+            ${j.notes ? '<small style="color:#888">Catatan: ' + j.notes.substring(0, 50) + (j.notes.length > 50 ? '...' : '') + '</small><br>' : ''}
+            <div class="action-btns">
+              <button class="action-btn edit-btn" title="Edit">✎</button>
+              <button class="action-btn delete-btn" title="Hapus">🗑</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+
+      // Swipe actions
+      $$('li').forEach(li => {
+        let startX, startTranslateX = 0;
+        const actionBtns = li.querySelector('.action-btns');
+
+        li.addEventListener('touchstart', e => {
+          startX = e.touches[0].clientX;
+          startTranslateX = parseFloat(li.style.transform.replace('translateX(', '').replace('px)', '')) || 0;
+        });
+
+        li.addEventListener('touchmove', e => {
+          const currentX = e.touches[0].clientX;
+          const diffX = currentX - startX;
+          li.style.transform = `translateX(${startTranslateX + diffX}px)`;
+
+          if (diffX > 50) {
+            li.classList.add('swipe-right');
+            li.classList.remove('swipe-left');
+          } else if (diffX < -50) {
+            li.classList.add('swipe-left');
+            li.classList.remove('swipe-right');
+          } else {
+            li.classList.remove('swipe-left', 'swipe-right');
+          }
+        });
+
+        li.addEventListener('touchend', () => {
+          const currentX = parseFloat(li.style.transform.replace('translateX(', '').replace('px)', '')) || 0;
+          if (currentX > 100) {
+            if (confirm('Edit jurnal ini?')) {
+              const index = journals.findIndex(j => j.id === parseInt(li.dataset.id));
+              if (index !== -1) openEditModal(index);
+            }
+            li.style.transform = 'translateX(0)';
+            li.classList.remove('swipe-right');
+          } else if (currentX < -100) {
+            if (confirm('Hapus jurnal ini?')) {
+              const index = journals.findIndex(j => j.id === parseInt(li.dataset.id));
+              if (index !== -1) {
+                journals.splice(index, 1);
+                saveAndRender();
+              }
+            }
+            li.style.transform = 'translateX(0)';
+            li.classList.remove('swipe-left');
+          } else {
+            li.style.transform = 'translateX(0)';
+            li.classList.remove('swipe-left', 'swipe-right');
+          }
+        });
+
+        // Long press
+        let pressTimer;
+        const clearTimer = () => clearTimeout(pressTimer);
+        const startPress = () => pressTimer = setTimeout(() => li.classList.add('long-pressed'), 500);
+
+        ['touchstart', 'mousedown'].forEach(e => li.addEventListener(e, startPress));
+        ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(e => li.addEventListener(e, clearTimer));
+
+        document.addEventListener('click', e => {
+          if (!li.contains(e.target)) li.classList.remove('long-pressed');
+        });
+
+        li.querySelector('.edit-btn').addEventListener('click', e => {
+          e.stopPropagation();
+          const index = journals.findIndex(j => j.id === parseInt(li.dataset.id));
+          if (index !== -1) openEditModal(index);
+        });
+
+        li.querySelector('.delete-btn').addEventListener('click', e => {
+          e.stopPropagation();
+          if (confirm('Hapus jurnal ini?')) {
+            const index = journals.findIndex(j => j.id === parseInt(li.dataset.id));
+            if (index !== -1) {
+              journals.splice(index, 1);
+              saveAndRender();
+            }
+          }
+        });
+      });
+
+      // Drag & drop
+      $$('li').forEach(item => {
+        item.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', item.dataset.id);
+          item.classList.add('dragging');
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+        });
+      });
+
+      els.journalList.addEventListener('dragover', e => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(els.journalList, e.clientY);
+        const draggable = document.querySelector('.dragging');
+        if (afterElement == null) {
+          els.journalList.appendChild(draggable);
+        } else {
+          els.journalList.insertBefore(draggable, afterElement);
+        }
+      });
+
+      els.journalList.addEventListener('drop', e => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        const draggedItem = journals.find(j => j.id == id);
+        const newIndex = Array.from(els.journalList.children).indexOf(document.querySelector(`[data-id="${id}"]`));
+        journals.splice(journals.findIndex(j => j.id == id), 1);
+        journals.splice(newIndex, 0, draggedItem);
+        saveAndRender();
+      });
+    };
+
+    const getDragAfterElement = (container, y) => {
+      const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    };
+
+    // Filters
+    const applyFilters = () => {
+      filteredJournals = journals.filter(j => {
+        const matchesSearch = j.pair.toLowerCase().includes(els.searchInput.value.toLowerCase());
+        const matchesStatus = els.statusFilter.value === '' || 
+          (els.statusFilter.value === 'berhasil' && j.tradeStatus.startsWith('berhasil')) || 
+          j.tradeStatus === els.statusFilter.value;
+
+        const jDate = new Date(j.datetime);
+        const start = els.startDate.value ? new Date(els.startDate.value) : null;
+        const end = els.endDate.value ? new Date(els.endDate.value) : null;
+        const matchesDate = (!start || jDate >= start) && (!end || jDate <= end);
+
+        // Advanced filters
+        let pl = 0;
+        if (j.tradeStatus.startsWith('berhasil') && j.tps[0]) {
+          pl = j.closePrice ? j.closePrice - j.entry : j.tps[0] - j.entry;
+        } else if (j.tradeStatus === 'gagal' && j.sl) {
+          pl = j.closePrice ? j.closePrice - j.entry : j.sl - j.entry;
+        }
+
+        let rr = 0;
+        if (j.entry && j.sl) {
+          const risk = Math.abs(j.entry - j.sl);
+          if (j.tps[0]) {
+            const reward = Math.abs(j.tps[0] - j.entry);
+            if (risk > 0) rr = reward / risk;
+          }
+        }
+
+        const matchesPL = (!els.minPL.value || pl >= parseFloat(els.minPL.value)) &&
+                          (!els.maxPL.value || pl <= parseFloat(els.maxPL.value));
+        const matchesRR = (!els.minRR.value || rr >= parseFloat(els.minRR.value)) &&
+                          (!els.maxRR.value || rr <= parseFloat(els.maxRR.value));
+        const matchesPair = els.pairFilter.value === '' || j.pair === els.pairFilter.value;
+
+        return matchesSearch && matchesStatus && matchesDate && matchesPL && matchesRR && matchesPair;
+      });
+      renderJournals();
+    };
+
+    // Input handlers
+    els.pair.addEventListener('input', e => {
+      let val = e.target.value.toUpperCase();
+      const triggers = ['USDT', 'USD', 'IDR'];
+      if (!val.includes('/') && triggers.some(t => val.includes(t)) && val.length > 3) {
+        for (const t of triggers) {
+          if (val.endsWith(t) && val.length > t.length) {
+            const before = val.slice(0, -t.length);
+            if (before && !before.endsWith('/')) val = before + '/' + t;
+          }
+        }
+      }
+      e.target.value = val;
+      showSuggestions(val);
+    });
+
+    const showSuggestions = input => {
+      els.suggestions.innerHTML = '';
+      if (!input.trim()) return;
+
+      const pairs = getUniquePairs();
+      const filtered = pairs.filter(p => p.toUpperCase().includes(input.toUpperCase()));
+      if (filtered.length === 0) return;
+
+      const rect = els.pair.getBoundingClientRect();
+      const container = document.createElement('div');
+      Object.assign(container.style, {
+        position: 'absolute', left: (rect.left + window.scrollX) + 'px',
+        top: (rect.bottom + window.scrollY) + 'px', width: (rect.width - 2) + 'px',
+        maxHeight: '150px', overflowY: 'auto', backgroundColor: 'var(--card-bg)',
+        border: '1px solid var(--border-color)', borderTop: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        borderRadius: '0 0 8px 8px', zIndex: '1001'
+      });
+
+      filtered.forEach(pair => {
+        const item = document.createElement('div');
+        item.textContent = pair;
+        item.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
+        item.addEventListener('click', () => {
+          els.pair.value = pair;
+          els.suggestions.innerHTML = '';
+          els.entry.focus();
+          calculateRR();
+        });
+        item.addEventListener('mouseenter', () => item.style.backgroundColor = '#e9ecef');
+        item.addEventListener('mouseleave', () => item.style.backgroundColor = 'var(--card-bg)');
+        container.appendChild(item);
+      });
+
+      els.suggestions.appendChild(container);
+    };
+
+    const attachPriceHandler = el => el.addEventListener('input', e => {
+      let val = e.target.value;
+      if (val.startsWith('.')) val = '0' + val;
+      e.target.value = val.replace(/[^0-9.]/g, '');
+      const parts = e.target.value.split('.');
+      if (parts.length > 2) e.target.value = parts[0] + '.' + parts.slice(1).join('');
+      calculateRR();
+    });
+
+    const calculateRR = () => {
+      const entry = parseFloat(els.entry.value) || 0;
+      const sl = parseFloat(els.sl.value) || 0;
+      const tp1 = parseFloat(document.querySelector('.tp-input')?.value) || 0;
+
+      if (entry && sl && tp1) {
+        const risk = Math.abs(entry - sl);
+        const reward = Math.abs(tp1 - entry);
+        if (risk > 0) {
+          const rr = (reward / risk).toFixed(2);
+          els.rrDisplay.value = rr;
+        }
+      } else {
+        els.rrDisplay.value = '';
+      }
+    };
+
+    // TP inputs
+    let tpCount = 1;
+    els.addTpBtn.addEventListener('click', () => {
+      const newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.className = 'tp-input';
+      newInput.placeholder = `TP${tpCount + 1}: 0.0`;
+      newInput.setAttribute('inputmode', 'decimal');
+      newInput.dataset.index = tpCount;
+      attachPriceHandler(newInput);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-tp-btn';
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', () => {
+        container.remove();
+        updateTradeStatusOptions($$('.tp-input').length);
+      });
+
+      const container = document.createElement('div');
+      container.className = 'tp-container';
+      container.appendChild(newInput);
+      container.appendChild(removeBtn);
+
+      els.tpInputs.appendChild(container);
+      tpCount++;
+      updateTradeStatusOptions($$('.tp-input').length);
+    });
+
+    // Remove TP button event delegation
+    els.tpInputs.addEventListener('click', e => {
+      if (e.target.classList.contains('remove-tp-btn')) {
+        e.target.parentElement.remove();
+        updateTradeStatusOptions($$('.tp-input').length);
+      }
+    });
+
+    // Toggle close price container based on trade status
+    els.tradeStatus.addEventListener('change', () => {
+      if (els.tradeStatus.value === 'dibatalkan') {
+        els.closePriceContainer.style.display = 'block';
+      } else {
+        els.closePriceContainer.style.display = 'none';
+      }
+    });
+
+    // Modal functions
+    const openAddModal = () => {
+      els.form.reset();
+      els.datetime.value = getCurrentLocalISO();
+      $$('div.toggle-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'bullish'));
+      els.marketStatus.value = 'bullish';
+      els.tradeStatus.value = 'berlangsung';
+      els.tpInputs.innerHTML = '<div class="tp-container"><input type="text" class="tp-input" inputmode="decimal" placeholder="TP1: 0.0" data-index="0"><button type="button" class="remove-tp-btn" style="display:none;">×</button></div>';
+      tpCount = 1;
+      $$('input.tp-input').forEach(attachPriceHandler);
+      els.editIndex.value = '-1';
+      els.modalTitle.textContent = 'Tambah Jurnal';
+      els.closePriceContainer.style.display = 'none';
+      els.suggestions.innerHTML = '';
+      els.modal.style.display = 'flex';
+      document.body.classList.add('no-scroll');
+      els.pair.focus();
+      els.rrDisplay.value = '';
+      els.closePrice.value = '';
+      updateTradeStatusOptions(1);
+    };
+
+    const openEditModal = index => {
+      const j = journals[index];
+      els.pair.value = j.pair;
+      els.entry.value = j.entry;
+      els.sl.value = j.sl || '';
+      els.datetime.value = j.datetime;
+      els.marketStatus.value = j.marketStatus;
+      els.tradeStatus.value = j.tradeStatus;
+      els.notes.value = j.notes;
+      els.closePrice.value = j.closePrice || '';
+      els.editIndex.value = index;
+      els.modalTitle.textContent = 'Edit Jurnal';
+
+      $$('div.toggle-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === j.marketStatus));
+
+      els.tpInputs.innerHTML = '';
+      tpCount = 0;
+      if (j.tps && j.tps.length) {
+        j.tps.forEach((tp, i) => {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'tp-input';
+          input.value = tp || '';
+          input.placeholder = `TP${i + 1}: ${tp || '0.0'}`;
+          input.setAttribute('inputmode', 'decimal');
+          input.dataset.index = i;
+          attachPriceHandler(input);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'remove-tp-btn';
+          removeBtn.textContent = '×';
+          removeBtn.addEventListener('click', () => {
+            container.remove();
+            updateTradeStatusOptions($$('.tp-input').length);
+          });
+
+          const container = document.createElement('div');
+          container.className = 'tp-container';
+          container.appendChild(input);
+          container.appendChild(removeBtn);
+
+          els.tpInputs.appendChild(container);
+          tpCount = i + 1;
+        });
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'tp-input';
+        input.placeholder = 'TP1: 0.0';
+        input.setAttribute('inputmode', 'decimal');
+        input.dataset.index = 0;
+        attachPriceHandler(input);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-tp-btn';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', () => {
+          container.remove();
+          updateTradeStatusOptions($$('.tp-input').length);
+        });
+
+        const container = document.createElement('div');
+        container.className = 'tp-container';
+        container.appendChild(input);
+        container.appendChild(removeBtn);
+
+        els.tpInputs.appendChild(container);
+        tpCount = 1;
+      }
+
+      updateTradeStatusOptions(tpCount);
+      if (j.tradeStatus === 'dibatalkan') {
+        els.closePriceContainer.style.display = 'block';
+      } else {
+        els.closePriceContainer.style.display = 'none';
+      }
+
+      els.suggestions.innerHTML = '';
+      els.modal.style.display = 'flex';
+      document.body.classList.add('no-scroll');
+      els.pair.focus();
+      calculateRR();
+    };
+
+    // Save & render
+    const saveAndRender = async () => {
+      await saveToDB(journals);
+      applyFilters();
+      updateStats();
+    };
+
+    // Event listeners
+    els.addBtn.addEventListener('click', openAddModal);
+    els.fabAdd.addEventListener('click', openAddModal);
+    [els.closeBtn, els.cancelBtn].forEach(btn => btn.addEventListener('click', () => {
+      els.modal.style.display = 'none';
+      document.body.classList.remove('no-scroll');
+      els.suggestions.innerHTML = '';
+    }));
+
+    $$('div.toggle-btn').forEach(btn => btn.addEventListener('click', () => {
+      $$('div.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      els.marketStatus.value = btn.dataset.value;
+    }));
+
+    els.form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const tps = Array.from($$('.tp-input')).map(inp => inp.value.trim() ? parseFloat(inp.value) : null).filter(tp => tp !== null && !isNaN(tp) && tp !== 0);
+      const newJournal = {
+        pair: els.pair.value.trim(), entry: parseFloat(els.entry.value) || 0, tps, sl: els.sl.value ? parseFloat(els.sl.value) : null,
+        datetime: els.datetime.value, marketStatus: els.marketStatus.value, tradeStatus: els.tradeStatus.value, notes: els.notes.value,
+        closePrice: els.tradeStatus.value === 'dibatalkan' ? (els.closePrice.value ? parseFloat(els.closePrice.value) : null) : null
+      };
+
+      const editIndex = parseInt(els.editIndex.value);
+      if (editIndex >= 0) {
+        journals[editIndex] = newJournal;
+      } else {
+        newJournal.id = Date.now(); // Temporary ID
+        journals.unshift(newJournal);
+      }
+
+      await saveAndRender();
+      els.modal.style.display = 'none';
+      document.body.classList.remove('no-scroll');
+      els.suggestions.innerHTML = '';
+    });
+
+    // Menu navigation
+    els.searchBtn.addEventListener('click', () => {
+      els.searchContainer.style.display = 'flex';
+      els.searchBtn.style.display = 'none';
+      els.filterBtn.style.display = 'none';
+      els.settingsBtn.style.display = 'none';
+      els.addBtn.style.display = 'none';
+      els.searchInput.focus();
+    });
+
+    els.closeSearch.addEventListener('click', () => {
+      els.searchContainer.style.display = 'none';
+      els.searchBtn.style.display = 'flex';
+      els.filterBtn.style.display = 'flex';
+      els.settingsBtn.style.display = 'flex';
+      els.addBtn.style.display = 'flex';
+      els.searchInput.value = '';
+      applyFilters();
+    });
+
+    els.searchInput.addEventListener('input', applyFilters);
+    els.statusFilter.addEventListener('change', applyFilters);
+    els.startDate.addEventListener('change', applyFilters);
+    els.endDate.addEventListener('change', applyFilters);
+    els.minPL.addEventListener('input', applyFilters);
+    els.maxPL.addEventListener('input', applyFilters);
+    els.minRR.addEventListener('input', applyFilters);
+    els.maxRR.addEventListener('input', applyFilters);
+    els.pairFilter.addEventListener('change', applyFilters);
+
+    els.filterBtn.addEventListener('click', () => showPage(els.filterPage));
+    els.settingsBtn.addEventListener('click', () => showPage(els.settingsPage));
+    els.backToMain1.addEventListener('click', () => hidePage(els.filterPage));
+    els.backToMain2.addEventListener('click', () => hidePage(els.settingsPage));
+
+    // Import/Export
+    els.exportBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(journals, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'jurnal-trading.json';
+      link.click();
+    });
+
+    els.importBtn.addEventListener('click', () => els.importInput.click());
+    els.importInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async event => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported)) {
+            journals = imported;
+            await saveAndRender();
+            hidePage(els.settingsPage);
+            alert('Data berhasil diimpor!');
+          } else alert('File tidak valid!');
+        } catch (e) { alert('Gagal membaca file!'); }
+      };
+      reader.readAsText(file);
+    });
+
+    // Theme toggle
+    els.themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+      localStorage.setItem('theme', theme);
+    });
+
+    // Auto theme based on system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme')) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+
+    // Attach price handlers
+    attachPriceHandler(els.entry);
+    attachPriceHandler(els.sl);
+    attachPriceHandler(els.closePrice);
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', e => {
+      if (!els.pair.contains(e.target) && !els.suggestions.contains(e.target)) els.suggestions.innerHTML = '';
+    });
+
+    // Apply filters initially
+    applyFilters();
+    updateStats();
+  </script>
+</body>
+</html>
