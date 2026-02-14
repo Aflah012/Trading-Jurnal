@@ -4,7 +4,7 @@
 The Trading Journal Application is a Progressive Web App (PWA) designed to help traders track their trades, analyze performance, and make informed decisions. It is a lightweight, offline-capable tool for active traders to record and reflect on their trading activities.
 
 ## Features
-- 📝 **Trade Tracking**: Log details of each trade including entry and exit points, trade size, and fees.
+- 📝 **Trade Tracking**: Log details of each trade including entry and exit points, and trade size.
 - 📊 **Performance Analysis**: Analyze your performance with metrics such as win/loss ratio, average profit/loss, and more.
 - 📱 **Progressive Web App**: Works offline, installable on mobile and desktop devices.
 - 💾 **Local Storage**: All data is stored locally in your browser - no account needed.
